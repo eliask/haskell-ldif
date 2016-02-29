@@ -79,20 +79,20 @@ pLdifContent = do
     recs <- sepEndBy1 pAttrValRec pSEPs
     return $ LDIFContent ver recs
 
-pAttrValRec ::  CharParser st ContentRecord
+pAttrValRec ::  CharParser st LDIFRecord
 pAttrValRec = do
     dn <- pDNSpec
     pSEP
     attrVals <- sepEndBy1 pAttrValSpec pSEP
     return $ ContentRecord dn attrVals
 
-pChangeRec :: CharParser st ChangeRecord
+pChangeRec :: CharParser st LDIFRecord
 pChangeRec = try pChangeAdd
          <|> try pChangeDel
          <|> try pChangeMod
          <|> pChangeModDN
 
-pChangeAdd :: CharParser st ChangeRecord
+pChangeAdd :: CharParser st LDIFRecord
 pChangeAdd = do
     dn <- pDNSpec
     pSEP
@@ -103,7 +103,7 @@ pChangeAdd = do
     vals <- sepEndBy1 pAttrValSpec pSEP
     return $ ChangeRecord dn (ChangeAdd vals)
 
-pChangeDel :: CharParser st ChangeRecord
+pChangeDel :: CharParser st LDIFRecord
 pChangeDel = do
     dn <- pDNSpec
     pSEP
@@ -113,7 +113,7 @@ pChangeDel = do
     pSEP
     return $ ChangeRecord dn ChangeDelete
 
-pChangeMod :: CharParser st ChangeRecord
+pChangeMod :: CharParser st LDIFRecord
 pChangeMod = do
     dn <- pDNSpec
     pSEP
@@ -124,7 +124,7 @@ pChangeMod = do
     mods <- sepEndBy1 pModSpec (char '-' >> pSEP)
     return $ ChangeRecord dn (ChangeModify mods)
 
-pChangeModDN :: CharParser st ChangeRecord
+pChangeModDN :: CharParser st LDIFRecord
 pChangeModDN = do
     dn <- pDNSpec
     pSEP
@@ -158,6 +158,7 @@ pDN = do
 
 pAttrEqValue :: CharParser st AttrValue
 pAttrEqValue = do
+   pFILL
    att <- pAttributeType
    char '='
    val <- pAttrValueDN
@@ -185,7 +186,7 @@ pModSpec = do
    vals <- sepEndBy pAttrValSpec pSEP
    return $ mkMod modType att vals
 
-mkMod :: String -> String -> [AttrValue] -> Modify
+mkMod :: String -> Attribute -> [AttrValue] -> Modify
 mkMod modType att vals | modType == "add:" = ModAdd att (map (snd) vals)
                        | modType == "delete:" = ModDelete att (map (snd) vals)
                        | modType == "replace:" = ModReplace att (map (snd) vals)
@@ -197,12 +198,12 @@ pModType = try (string "add:")
        <|> try (string "delete:")
        <|> string "replace:"
 
-pAttributeDescription :: CharParser st String
+pAttributeDescription :: CharParser st Attribute
 pAttributeDescription = pAttributeType
 
-pAttributeType :: CharParser st String
+pAttributeType :: CharParser st Attribute
 pAttributeType = try pLdapOid
-             <|> (do { l <- letter; o <- pAttrTypeChars; return $ l:o } )
+             <|> (do { l <- letter; o <- pAttrTypeChars; return (Attribute $ l:o) } )
 
 pAttrValSpec :: CharParser st AttrValue
 pAttrValSpec = do
@@ -230,11 +231,11 @@ pBase64String = pSafeString
 pAttrTypeChars :: CharParser st String
 pAttrTypeChars = many (satisfy (\x -> isAlphaNum x || x == '-'))
 
-pLdapOid :: CharParser st String
+pLdapOid :: CharParser st Attribute
 pLdapOid = do
    num <- many1 digit
    rest <- many (do { string "."; n <- many1 digit; return $ '.':n})
-   return $ num ++ concat rest
+   return (Attribute $ num ++ concat rest)
 
 pFILL :: CharParser st ()
 pFILL = spaces
