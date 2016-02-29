@@ -10,4 +10,4 @@
 * TODO update serializers back to LDIF for base64 & all DN notations
 * TODO add module tests for versioned LDIFs
 * TODO add module tests for base64 parsing
-
+* TODO Implement Attribute Name case-insensitive matching at DN

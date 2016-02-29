@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.2
+Version:         0.0.3
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
@@ -23,7 +23,7 @@ Build-Type:      Simple
 Cabal-Version:   >= 1.6
 Extra-Source-Files:
     run_tests.sh
-    TODO
+    TODO.org
     doc/rfc2253.txt
     doc/rfc2849.txt
     tests/TestMain.hs
@@ -51,7 +51,7 @@ Library
                    filepath,
                    haskell98,
                    parsec       >= 2.1.0,
-                   Cabal        >= 1.5 && < 1.7
+                   Cabal        >= 1.5 && < 1.9
   Hs-Source-Dirs:  src
   Extensions:      CPP, PatternGuards
   Ghc-Options:      -Wall -fno-warn-orphans
