@@ -5,12 +5,12 @@ where
 import Text.LDIF.Types
 import Text.LDIF.Utils
 import Text.LDIF.Printer
-import Data.List (nub)
+import Data.List (nub, foldl')
 
 -- | Apply one LDIF to another LDIF. The destination LDIF has
 -- | to be Content LDIF
 applyLDIF :: LDIF -> LDIF -> LDIF
-applyLDIF dst (LDIF _ xs) = foldr (applyRecord2LDIF) dst xs
+applyLDIF dst (LDIF _ xs) = foldl' (\ld chg -> applyRecord2LDIF chg ld) dst xs
 
 -- | Apply one LDIF Content/Change Record into LDIF and produce Changed LDIF
 applyRecord2LDIF :: LDIFRecord -> LDIF -> LDIF

@@ -12,13 +12,28 @@ main = do
     ls <- getLDIFs ldifDir
     runTestTT (tests ls)
 
-tests ls = TestList $ (testCasesParseOK ls) ++ testCasesDIFF ++ testCasesUtils
+tests ls = TestList $ (testCasesParseOK ls) ++ testCasesDIFF ++ testCasesUtils ++ (testCasesPrintOK ls)
 
 --
 -- Test Cases
 --
 testCasesDIFF = [TestCase (assertEqual "dummy" True True)]
-testCasesParseOK ls = map (\x -> TestCase (assertParsedOK x)) $ filter (isOK) ls
+testCasesParseOK ls = map (\x -> TestCase (checkParsing x)) $ filter (isOK) ls
+    where
+      checkParsing fname = do
+        ret <- parseLDIFFile fname
+        assertParsedOK fname ret "Parsing test"
+
+testCasesPrintOK ls = map (\x -> TestCase (checkParsing x)) $ filter (isOK) ls
+    where
+      checkParsing fname = do
+        ret <- parseLDIFFile fname
+        case ret of 
+          Left _     -> return ()
+          Right ldif -> do
+              let ret2 = parseLDIFStr (ldif2str ldif)
+              assertParsedOK fname ret2 "Printing test"
+
 testCasesUtils = [ TestCase (assertBool "DN1Root is Prefix of DN2Root" (not $ isDNPrefixOf dn1root dn2root))
                  , TestCase (assertBool "DN1Root is Prefix of DN1Child" (isDNPrefixOf dn1root dn1child))
                  , TestCase (assertBool "DN Size 1" (1 == sizeOfDN dn1root))
@@ -37,9 +52,9 @@ getLDIFs dr = do
 isOK x = isPrefixOf "OK" (takeFileName x)
 isLDIF x = isSuffixOf ".ldif" x
 
-assertParsedOK filename = do
-     ret <- parseLDIFFile filename 
-     either (\e -> assertFailure (show e)) (\ldif -> assertParsedType filename ldif) ret
+assertParsedOK filename ret msg  = case ret of
+  Left e -> assertFailure $ msg ++ " " ++ (show e)
+  Right ldif -> assertParsedType filename ldif
 
 assertParsedType name ldif | (isSuffixOf ".modify.ldif" name) = assertTypeChanges name ldif
                            | (isSuffixOf ".content.ldif" name) = assertTypeContent name ldif

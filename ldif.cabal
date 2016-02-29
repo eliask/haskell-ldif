@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.9
+Version:         0.0.10
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
@@ -42,6 +42,7 @@ Extra-Source-Files:
     tests/data/OK_simple03.modify.ldif
     tests/data/OK_simpleComment.modify.ldif
     tests/data/OK_simpleWrap.modify.ldif
+    tests/data/OK_dnescaped01.content.ldif
     
 Source-Repository head
   type:     darcs
@@ -52,14 +53,12 @@ flag test
   default:     False
 
 Library
-  Build-Depends:   ghc,
-                   base         < 5,
+  Build-Depends:   base         < 5,
                    filepath,
                    containers,
                    cmdargs      >= 0.2,
                    directory,
-                   parsec       >= 2.1.0,
-                   Cabal        >= 1.4
+                   parsec       >= 2.1.0
   Hs-Source-Dirs:  src
   Extensions:      CPP, PatternGuards
   Ghc-Options:      -Wall -fno-warn-orphans
@@ -72,6 +71,7 @@ Library
         Text.LDIF.Utils
         Text.LDIF.Diff
         Text.LDIF.Apply
+        Text.LDIF.Consts
 
 Executable diffLDIF
   Hs-Source-Dirs:  src

@@ -6,9 +6,11 @@ module Text.LDIF.Parser (
 )
 where
 import Text.LDIF.Types
+import Text.LDIF.Consts
 import Text.ParserCombinators.Parsec
 import Data.Char
 import Data.List (isPrefixOf)
+import Numeric (readHex)
 
 -- | Parse string as LDIF content and return LDIF or ParseError
 parseLDIFStr :: String -> Either ParseError LDIF
@@ -180,11 +182,18 @@ pAttrEqValue = do
 
 pAttrValueDN :: CharParser st Value
 pAttrValueDN = do
-   many (noneOf stringChars)
+   many allChar
    where 
-     specialChars = [',','=','+','#',';','\n','\r']
-     -- specialChars = [',','=','+','<','>','#',';','\n','\r']
-     stringChars  = '\\':'"':specialChars 
+     allChar = try (escChar) <|> try (hexChar) <|> (noneOf (escapedDNChars ++ "\n\r"))
+     escChar = do
+       _ <- char '\\'
+       oneOf escapedDNChars
+     hexChar = do
+       _ <- char '\\'
+       hval <- count 2 hexDigit
+       case readHex hval of
+         [(val,[])] -> return $ chr val
+         _          -> fail $ "invalid hex value: " ++ hval
 
 pVersionSpec :: CharParser st String
 pVersionSpec = do

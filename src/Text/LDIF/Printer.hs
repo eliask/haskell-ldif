@@ -6,7 +6,10 @@ module Text.LDIF.Printer (
 )
 where
 import Text.LDIF.Types
+import Text.LDIF.Consts
 import Data.List
+import Data.Char
+import Numeric (showHex)
 
 -- | Serialize LDIF in LDIF Format
 ldif2str :: LDIF -> String
@@ -19,7 +22,14 @@ ver2str (Just v) = ["version: "++v]
 
 -- | Serialize DN to LDIF Format
 dn2str :: DN -> String
-dn2str xs = intercalate "," $ map (\((Attribute n),v) -> n++"="++v) (dnAttrVals xs)
+dn2str xs = intercalate "," $ map (\((Attribute n),v) -> n++"="++(escapeDNVals v)) (dnAttrVals xs)
+
+escapeDNVals :: String -> String
+escapeDNVals vs = concat $ map escapeDNVal vs
+  where
+    escapeDNVal x | not $ isPrint x          = '\\':(showHex (ord x) "")
+                  | elem x escapedDNChars    = '\\':[x]
+                  | otherwise                = [x]
 
 -- | Serialize Content Record in LDIF Format
 record2str :: LDIFRecord -> String
