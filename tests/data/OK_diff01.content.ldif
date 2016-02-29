@@ -1,0 +1,10 @@
+dn: cn=The Postmaster,dc=example,dc=com
+objectClass: organizationalRole
+cn: The Postmaster
+oldAttr: attrValue1
+oldAttr: attrValue2
+
+dn: cn=The Postmaster Remove,dc=example,dc=com
+objectClass: organizationalRole
+cn: The Postmaster Remove
+

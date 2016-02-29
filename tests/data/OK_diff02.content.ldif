@@ -1,0 +1,4 @@
+dn: cn=The Postmaster,dc=example,dc=com
+objectClass: organizationalRole
+cn: The Postmaster
+newAttribute: newValue
