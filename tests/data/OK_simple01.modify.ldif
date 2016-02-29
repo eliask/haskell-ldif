@@ -1,0 +1,5 @@
+dn: cn=The Postmaster,dc=example,dc=com
+changetype: delete
+
+dn: cn=somebody,dc=example,dc=com
+changetype: delete

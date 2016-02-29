@@ -1,0 +1,7 @@
+dn: cn=The Postmaster,dc=example,dc=com
+objectClass: organizationalRole
+cn: The Postmaster
+
+dn: cn=somebody,dc=example,dc=com
+objectClass: organizationalRole
+cn: somebody
