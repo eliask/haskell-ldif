@@ -19,7 +19,7 @@ ver2str (Just v) = ["version: "++v]
 
 -- | Serialize DN to LDIF Format
 dn2str :: DN -> String
-dn2str (DN xs) = intercalate "," $ map (\((Attribute n),v) -> n++"="++v) xs
+dn2str xs = intercalate "," $ map (\((Attribute n),v) -> n++"="++v) (dnAttrVals xs)
 
 -- | Serialize Content Record in LDIF Format
 record2str :: LDIFRecord -> String

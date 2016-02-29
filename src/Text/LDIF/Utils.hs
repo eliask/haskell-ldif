@@ -13,7 +13,9 @@ module Text.LDIF.Utils (
         ldif2tree,
         getLDIFType,
         isContentRecord,
-        isChangeRecord
+        isChangeRecord,
+        dn2dnI,
+        ldif2ldifI
 )
 where
 import Text.LDIF.Types
@@ -50,13 +52,14 @@ rootOfDN :: DN -> AttrValue
 rootOfDN xs = getDNValue xs ((sizeOfDN xs)-1)
 
 sizeOfDN :: DN -> Int
-sizeOfDN (DN vals) = length vals
+sizeOfDN xs = length (dnAttrVals xs)
 
 getDNValue :: DN -> Int -> AttrValue
-getDNValue (DN vals) idx = vals !! idx
+getDNValue xs idx = (dnAttrVals xs) !! idx
 
 takeDNPrefix :: DN -> Int -> DN
-takeDNPrefix (DN vals) n = (DN (reverse $ take n (reverse vals)))
+takeDNPrefix (DN vals) n  = (DN (reverse $ take n (reverse vals)))
+takeDNPrefix (DNi vals) n = (DNi (reverse $ take n (reverse vals)))
 
 -- | Check if the dn1 is prefix of dn2
 isDNPrefixOf :: DN -> DN -> Bool
@@ -100,3 +103,12 @@ getLDIFType (LDIF _ xs) = getLDIFType' con chg
       getLDIFType' [] _  = LDIFChangesType
       getLDIFType' _  [] = LDIFContentType
       getLDIFType' _  _  = LDIFMixedType
+
+dn2dnI :: DN -> DN
+dn2dnI (DN xs) = (DNi xs)
+dn2dnI xs = xs
+
+ldif2ldifI :: LDIF -> LDIF
+ldif2ldifI (LDIF v xs) = LDIF v ys
+    where
+      ys = map (\x -> x { reDN = dn2dnI (reDN x) } )  xs

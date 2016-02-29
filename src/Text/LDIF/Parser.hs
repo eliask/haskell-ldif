@@ -68,7 +68,7 @@ pLdifChanges = do
     pSEPs
     ver <- optionMaybe pVersionSpec
     pSEPs
-    recs <- sepEndBy1 pChangeRec pSEPs
+    recs <- sepEndBy pChangeRec pSEPs
     eof
     return $ LDIF ver recs
 
@@ -77,7 +77,7 @@ pLdifMixed = do
     pSEPs
     ver <- optionMaybe pVersionSpec
     pSEPs
-    recs <- sepEndBy1 pRec pSEPs
+    recs <- sepEndBy pRec pSEPs
     eof
     return $ LDIF ver recs
 
@@ -86,7 +86,7 @@ pLdifContent = do
     pSEPs
     ver <- optionMaybe pVersionSpec
     pSEPs
-    recs <- sepEndBy1 pAttrValRec pSEPs
+    recs <- sepEndBy pAttrValRec pSEPs
     eof
     return $ LDIF ver recs
 

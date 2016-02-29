@@ -53,4 +53,10 @@ data Modify = ModAdd     { modAttr :: Attribute, modAttrVals :: [Value] }
             | ModReplace { modAttr :: Attribute, modAttrVals :: [Value] } deriving (Show, Eq)
 
 -- | Represents Distinguished Name (DN)
-data DN = DN { dnAttrVals :: [AttrValue] } deriving (Show, Eq)
+data DN = DN { dnAttrVals :: [AttrValue] } 
+        | DNi { dnAttrVals :: [AttrValue] } deriving (Show)
+
+instance Eq DN where
+    (DN xs)  == (DN ys)   = xs == ys
+    (DNi xs) == (DNi ys)  = (map (\(n,v) -> (n,(map toUpper v)))  xs) == (map (\(n,v) -> (n,(map toUpper v))) ys)
+    x        == y         = (DNi (dnAttrVals x)) == (DNi (dnAttrVals y))

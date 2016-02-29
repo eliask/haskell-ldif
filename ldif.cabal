@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.7
+Version:         0.0.8
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
@@ -17,8 +17,11 @@ Description:
  .
  - diffLDIF command generates change LDIF between two 
    content LDIF files.
+ .
  - ldif2html command generates hypertext HTML browsable
    LDIF file. 
+ .
+ - ldifmodify commmand apply change LDIF on contenct LDIF
  .
 Category:        Text
 Stability:       experimental
@@ -52,11 +55,11 @@ Library
   Build-Depends:   ghc,
                    base         < 5,
                    filepath,
-                   haskell98,
                    containers,
                    cmdargs,
+                   directory,
                    parsec       >= 2.1.0,
-                   Cabal        >= 1.5 && < 1.9
+                   Cabal        >= 1.4
   Hs-Source-Dirs:  src
   Extensions:      CPP, PatternGuards
   Ghc-Options:      -Wall -fno-warn-orphans

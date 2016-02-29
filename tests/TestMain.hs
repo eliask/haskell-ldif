@@ -2,7 +2,7 @@ import Text.LDIF
 import Test.HUnit
 import Data.Either
 import Data.List
-import Directory
+import System.Directory
 import System.FilePath
 import Control.Monad (liftM)
 
