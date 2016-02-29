@@ -16,21 +16,18 @@ data LdifModify = LdifModify { baseFile :: FilePath
                              , modFiles  :: [FilePath]
                              , outFile  :: FilePath } deriving (Show, Data, Typeable)
 
-defaultCfg = mode $ LdifModify { baseFile = def &= typFile & flag "f" & text "Base LDIF File"
-                               , modFiles = def &= args & typ "LDIF Files for applying"
-                               , outFile = def &= typFile & flag "o" & text "Output LDIF File" }
-
-verifyCfg :: LdifModify -> IO ()
-verifyCfg (LdifModify [] [] [])                       = do
-               msg <- cmdArgsHelp progDesc [defaultCfg] Text
-               error msg
-verifyCfg (LdifModify bf mfx ouf) | length bf  == 0   = error "Missing Base LDIF File parameter (-f)"
-                                  | length mfx == 0   = error "Missing LDIF Files for applying as arguments"
-                                  | otherwise         = return ()                                                              
+defaultCfg = LdifModify { baseFile = def &= typFile &= name "f" &= help "Base LDIF File"
+                        , modFiles = def &= args &= typ "LDIF Files for applying"
+                        , outFile = def &= typFile &= name "o" &= help "Output LDIF File" }
 
 main = do
-  cfg <- cmdArgs progDesc [defaultCfg]
-  verifyCfg cfg
+  cfg <- cmdArgs defaultCfg
+  execute cfg
+
+execute (LdifModify [] _ _) = putStrLn "Error: -f base LDIF File is mandatory"
+execute (LdifModify _ [] _) = putStrLn "Error: no LDIF Files for applying provided"
+execute (LdifModify _ _ []) = putStrLn "Error: -o output LDIF File is mandatory"
+execute cfg = do
   baseLDIF <- safeParseLDIFFile (baseFile cfg)
   modLDIFs <- mapM (safeParseLDIFFile) (modFiles cfg)
   let outLDIF = foldr (flip applyLDIF) baseLDIF modLDIFs

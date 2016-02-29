@@ -14,22 +14,18 @@ progDesc = "Create delta LDIF between Source LDIF and Target LDIF"
 data DiffLdif = DiffLdif { srcFile :: FilePath
                          , dstFile :: FilePath } deriving (Show, Data, Typeable)
 
-defaultCfg = mode $ DiffLdif { srcFile = def &= typFile & flag "s" & text "Source LDIF File"
-                             , dstFile = def &= typFile & flag "t" & text "Target LDIF File" }
-
-verifyCfg :: DiffLdif -> IO ()
-verifyCfg (DiffLdif [] []) = do 
-  msg <- cmdArgsHelp progDesc [defaultCfg] Text
-  error msg
-verifyCfg (DiffLdif [] _)  = error "Missing Source LDIF File parameter (-s)"
-verifyCfg (DiffLdif _ [])  = error "Missing Target LDIF File parameter (-t)"
-verifyCfg (DiffLdif _ _ )  = return ()
+defaultCfg = DiffLdif { srcFile = def &= typFile &= name "s" &= help "Source LDIF File"
+                      , dstFile = def &= typFile &= name "t" &= help "Target LDIF File" }
 
 main = do
-  cfg <- cmdArgs progDesc [defaultCfg]
-  verifyCfg cfg
-  ml1 <- parseLDIFFile (srcFile cfg)
-  ml2 <- parseLDIFFile (dstFile cfg)
+  cfg <- cmdArgs defaultCfg
+  execute cfg
+
+execute (DiffLdif []  _  ) = putStrLn "Error: -s source file is mandatory" 
+execute (DiffLdif _ []   ) = putStrLn "Error: -t target file is mandatory"
+execute (DiffLdif src dst) = do
+  ml1 <- parseLDIFFile src
+  ml2 <- parseLDIFFile dst
   case rights [ml1,ml2] of 
        [l1,l2] -> case diffLDIF l1 l2 of
                     Left err -> putStrLn err
