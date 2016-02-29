@@ -9,8 +9,7 @@ import Text.LDIF
 import qualified Data.Set as Set
 
 ldif2html :: Set.Set String -> LDIF -> String
-ldif2html idx (LDIFContent v xs) = unlines $ (ver2str v) ++ (map (record2html idx) xs)
-ldif2html idx (LDIFChanges v xs) = unlines $ (ver2str v) ++ (map (record2html idx) xs)
+ldif2html idx (LDIF v xs) = unlines $ (ver2str v) ++ (map (record2html idx) xs)
 
 -- | Serialize version to LDIF Format Lines
 ver2str :: Maybe String -> [String]
@@ -73,5 +72,4 @@ doLDIF2HTML names outF = do
        xs  -> mapM_ print xs
 
 dns :: LDIF -> Set.Set String
-dns (LDIFContent _ xs) = Set.fromList $ nub $ map (dn2last . reDN) xs
-dns (LDIFChanges _ xs) = Set.fromList $ nub $ map (dn2last . reDN) xs
+dns (LDIF _ xs) = Set.fromList $ nub $ map (dn2last . reDN) xs

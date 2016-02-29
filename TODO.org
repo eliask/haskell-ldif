@@ -7,8 +7,8 @@
 ** update serializers back to LDIF for base64 & all DN notations
 ** add module tests for versioned LDIFs
 ** add module tests for base64 parsing
-** Use getopt for input parameters on diffLDIF cmd
-** TODO Implement ldifmodify (like ldapmodify)
+** DONE Use getopt for input parameters on diffLDIF cmd
+** DONE Implement ldifmodify (like ldapmodify)
     offline applying of Change LDIF on Content LDIF
     ldifmodify -f <contentLDIF> -o <outputLDIF> [<modifyLDIF> ... ] 
 * Archive

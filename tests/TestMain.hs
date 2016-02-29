@@ -12,14 +12,21 @@ main = do
     ls <- getLDIFs ldifDir
     runTestTT (tests ls)
 
-tests ls = TestList $ (testCasesParseOK ls) ++ (testCasesDIFF)
+tests ls = TestList $ (testCasesParseOK ls) ++ testCasesDIFF ++ testCasesUtils
 
 --
 -- Test Cases
 --
 testCasesDIFF = [TestCase (assertEqual "dummy" True True)]
 testCasesParseOK ls = map (\x -> TestCase (assertParsedOK x)) $ filter (isOK) ls
-
+testCasesUtils = [ TestCase (assertBool "DN1Root is Prefix of DN2Root" (not $ isDNPrefixOf dn1root dn2root))
+                 , TestCase (assertBool "DN1Root is Prefix of DN1Child" (isDNPrefixOf dn1root dn1child))
+                 , TestCase (assertBool "DN Size 1" (1 == sizeOfDN dn1root))
+                 , TestCase (assertBool "DN Size 2" (2 == sizeOfDN dn1child))]
+    where
+      dn1root = head $ rights [ parseDNStr "dc=sk" ]
+      dn2root = head $ rights [ parseDNStr "dc=de" ]
+      dn1child = head $ rights [ parseDNStr "o=green,dc=sk" ]
 --
 -- Support Methods
 --
@@ -38,9 +45,9 @@ assertParsedType name ldif | (isSuffixOf ".modify.ldif" name) = assertTypeChange
                            | (isSuffixOf ".content.ldif" name) = assertTypeContent name ldif
                            | otherwise = assertFailure $ "Unexpected filename: (not .modify.ldif or .content.ldif " ++ name
 
-assertTypeContent n l@(LDIFContent _ _) = assertBool "Valid Content Type" True -- >> (putStrLn $ "\n\n" ++ n ++ "\n\n" ++ (show l))
-assertTypeContent n x = assertFailure $ n ++ " is not type of LDIFContent"
+assertTypeContent n l  | (getLDIFType l == LDIFContentType) = assertBool "Valid Content Type" True -- >> (putStrLn $ "\n\n" ++ n ++ "\n\n" ++ (show l))
+                       | otherwise          = assertFailure $ n ++ " is not type of LDIFContent"
 
-assertTypeChanges n l@(LDIFChanges _ _) = assertBool "Valid Changes Type" True -- >> (putStrLn $ "\n\n" ++ n ++ "\n\n" ++ (show l))
-assertTypeChanges n x = assertFailure $ n ++ " is not type of LDIFChanges"
+assertTypeChanges n l | (getLDIFType l /= LDIFContentType) = assertBool "Valid Changes Type" True -- >> (putStrLn $ "\n\n" ++ n ++ "\n\n" ++ (show l))
+                      | otherwise          = assertFailure $ n ++ " is not type of LDIFChanges"
   

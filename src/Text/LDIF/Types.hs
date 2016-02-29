@@ -23,12 +23,18 @@ type Value = String
 type AttrValue = (Attribute, Value)
 
 -- | Type of LDIF Files (Content, Changes)
-data LDIFType = LDIFContentType | LDIFChangesType deriving (Show, Eq) -- Maybe LDIFMixedType 
+data LDIFType = LDIFContentType 
+              | LDIFChangesType 
+              | LDIFMixedType deriving Eq
+
+instance Show LDIFType where
+    show LDIFChangesType = "Delta"
+    show LDIFContentType = "Content"
+    show LDIFMixedType   = "Mixed"
 
 -- | Represents LDIF structure, it can be either simply LDIF data dump or
 -- | changes LDIF with LDAP operations 
-data LDIF = LDIFContent { lcVersion :: Maybe String, lcEntries :: [LDIFRecord] }
-          | LDIFChanges { lcVersion :: Maybe String, lcChanges :: [LDIFRecord] } deriving (Show, Eq)
+data LDIF = LDIF { lcVersion :: Maybe String, lcEntries :: [LDIFRecord] } deriving (Show, Eq)
 
 -- | Represents one data record within LDIF file with DN and content
 -- | Represents one change record within LDIF file with DN and content

@@ -10,6 +10,8 @@ import System.Environment
 import Text.LDIF
 import System.Console.CmdArgs
 
+progDesc = "Apply LDAP operations from LDIF to LDIF (like ldapmodify)"
+
 data LdifModify = LdifModify { baseFile :: FilePath
                              , modFiles  :: [FilePath]
                              , outFile  :: FilePath } deriving (Show, Data, Typeable)
@@ -19,12 +21,15 @@ defaultCfg = mode $ LdifModify { baseFile = def &= typFile & flag "f" & text "Ba
                                , outFile = def &= typFile & flag "o" & text "Output LDIF File" }
 
 verifyCfg :: LdifModify -> IO ()
+verifyCfg (LdifModify [] [] [])                       = do
+               msg <- cmdArgsHelp progDesc [defaultCfg] Text
+               error msg
 verifyCfg (LdifModify bf mfx ouf) | length bf  == 0   = error "Missing Base LDIF File parameter (-f)"
                                   | length mfx == 0   = error "Missing LDIF Files for applying as arguments"
                                   | otherwise         = return ()                                                              
 
 main = do
-  cfg <- cmdArgs "LDIF Modify. Apply LDAP operations from LDIF to LDIF" [defaultCfg]
+  cfg <- cmdArgs progDesc [defaultCfg]
   verifyCfg cfg
   baseLDIF <- safeParseLDIFFile (baseFile cfg)
   modLDIFs <- mapM (safeParseLDIFFile) (modFiles cfg)

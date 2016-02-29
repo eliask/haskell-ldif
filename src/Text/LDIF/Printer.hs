@@ -10,8 +10,7 @@ import Data.List
 
 -- | Serialize LDIF in LDIF Format
 ldif2str :: LDIF -> String
-ldif2str (LDIFContent v xs) = unlines $ (ver2str v) ++ (map (record2str) xs)
-ldif2str (LDIFChanges v xs) = unlines $ (ver2str v) ++ (map (record2str) xs)
+ldif2str (LDIF v xs) = unlines $ (ver2str v) ++ (map (record2str) xs)
 
 -- | Serialize version to LDIF Format Lines
 ver2str :: Maybe String -> [String]

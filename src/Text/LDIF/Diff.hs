@@ -5,10 +5,7 @@ module Text.LDIF.Diff (
 where
 import Text.LDIF.Types
 import Text.LDIF.Utils
-import Text.LDIF.Printer
 import Data.Maybe
-import Data.Either
-import Data.List (nub)
 
 -- | Create Change LDIF between to LDIF contents. If any
 -- | of input argument is not LDIFContent it returns Nothing. 
@@ -18,8 +15,14 @@ import Data.List (nub)
 -- | Unsing following strategy: 
 -- | 1. Iterate over L1 DN's and Modify / Remove Content 
 -- | 2. Iterate over L2 and Add Content not in L1
-diffLDIF :: LDIF -> LDIF -> Maybe LDIF
-diffLDIF l1@(LDIFContent _ c1) l2@(LDIFContent v2 c2) = Just (LDIFChanges v2 (changes ++ adds))
+diffLDIF :: LDIF -> LDIF -> Either String LDIF
+diffLDIF l1 l2 | getLDIFType l1 == LDIFContentType && getLDIFType l2 == LDIFContentType = Right (diffLDIF' l1 l2)
+               | otherwise = Left ("Diff supported only on Content LDIFs but SRC="
+                                         ++(show $ getLDIFType l1)++" and DST="
+                                         ++(show $ getLDIFType l2))
+
+diffLDIF' :: LDIF -> LDIF -> LDIF
+diffLDIF' l1@(LDIF _ c1) l2@(LDIF v2 c2) = LDIF v2 (changes ++ adds)
    where 
       adds = map (content2add) $ filter (not . isEntryIn l1) c2
       changes = filter (not . isDummyRecord) $ foldl (processEntry) [] c1
@@ -33,7 +36,7 @@ diffLDIF l1@(LDIFContent _ c1) l2@(LDIFContent v2 c2) = Just (LDIFChanges v2 (ch
                           Nothing -> False
                           Just _  -> True
       content2add (ContentRecord dn vals) = ChangeRecord dn (ChangeAdd vals)
-diffLDIF _ _ = Nothing
+      content2add (ChangeRecord _ _)      = error "Unexpected record type"
 
 -- | Diff two AttrVal Records if any of provided. 
 -- | Implementation uses inefficient algorithm for large count of attributes within ContentRecord.

@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.6
+Version:         0.0.7
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
@@ -82,9 +82,13 @@ Executable ldifmodify
   Hs-Source-Dirs:  src
   Main-Is:         ldifmodify.hs
 
+Executable ldifparse
+  Hs-Source-Dirs:  src
+  Main-Is:         ldifparse.hs
+
 Executable test
   Hs-Source-Dirs:  src, tests
   Main-Is:         TestMain.hs
-  Build-Depends:   base, HUnit
+  Build-Depends:   base, HUnit == 1.2.*
   if !flag(test)
     Buildable:     False

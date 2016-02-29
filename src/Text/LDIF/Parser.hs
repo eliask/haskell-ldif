@@ -7,9 +7,8 @@ module Text.LDIF.Parser (
 where
 import Text.LDIF.Types
 import Text.ParserCombinators.Parsec
-import Data.Either
 import Data.Char
-import Data.List (isPrefixOf, foldl')
+import Data.List (isPrefixOf)
 
 -- | Parse string as LDIF content and return LDIF or ParseError
 parseLDIFStr :: String -> Either ParseError LDIF
@@ -26,6 +25,7 @@ parseLDIFFile name = do
 -- | and mismatch generates ParseError
 parseLDIFStrAs' :: String -> Maybe LDIFType -> String -> Either ParseError LDIF
 parseLDIFStrAs' nm Nothing                = parse pLdif        nm . preproc
+parseLDIFStrAs' nm (Just LDIFMixedType)   = parse pLdif        nm . preproc
 parseLDIFStrAs' nm (Just LDIFContentType) = parse pLdifContent nm . preproc
 parseLDIFStrAs' nm (Just LDIFChangesType) = parse pLdifChanges nm . preproc
 
@@ -56,12 +56,12 @@ takeLines xs = let (ln,ys) = takeLine xs
 takeLine :: [String] -> (String, [String])
 takeLine []     = ([],[])
 takeLine (x:[]) = (x,[])
-takeLine (x:xs) = let isCont x = " " `isPrefixOf` x  
+takeLine (x:xs) = let isCont z = " " `isPrefixOf` z
                   in (x ++ (concat $ map (tail) $ takeWhile (isCont) xs), dropWhile (isCont) xs) 
 
 -- | Parsec ldif parser
 pLdif :: CharParser st LDIF
-pLdif = try pLdifChanges <|> pLdifContent
+pLdif = try pLdifChanges <|> try pLdifMixed
 
 pLdifChanges :: CharParser st LDIF
 pLdifChanges = do
@@ -69,7 +69,17 @@ pLdifChanges = do
     ver <- optionMaybe pVersionSpec
     pSEPs
     recs <- sepEndBy1 pChangeRec pSEPs
-    return $ LDIFChanges ver recs
+    eof
+    return $ LDIF ver recs
+
+pLdifMixed:: CharParser st LDIF
+pLdifMixed = do
+    pSEPs
+    ver <- optionMaybe pVersionSpec
+    pSEPs
+    recs <- sepEndBy1 pRec pSEPs
+    eof
+    return $ LDIF ver recs
 
 pLdifContent :: CharParser st LDIF
 pLdifContent = do
@@ -77,7 +87,8 @@ pLdifContent = do
     ver <- optionMaybe pVersionSpec
     pSEPs
     recs <- sepEndBy1 pAttrValRec pSEPs
-    return $ LDIFContent ver recs
+    eof
+    return $ LDIF ver recs
 
 pAttrValRec ::  CharParser st LDIFRecord
 pAttrValRec = do
@@ -85,6 +96,9 @@ pAttrValRec = do
     pSEP
     attrVals <- sepEndBy1 pAttrValSpec pSEP
     return $ ContentRecord dn attrVals
+
+pRec :: CharParser st LDIFRecord
+pRec = try pChangeRec <|> pAttrValRec
 
 pChangeRec :: CharParser st LDIFRecord
 pChangeRec = try pChangeAdd
@@ -96,9 +110,9 @@ pChangeAdd :: CharParser st LDIFRecord
 pChangeAdd = do
     dn <- pDNSpec
     pSEP
-    string "changetype:"
+    _ <- string "changetype:"
     pFILL
-    string "add"
+    _ <- string "add"
     pSEP
     vals <- sepEndBy1 pAttrValSpec pSEP
     return $ ChangeRecord dn (ChangeAdd vals)
@@ -107,9 +121,9 @@ pChangeDel :: CharParser st LDIFRecord
 pChangeDel = do
     dn <- pDNSpec
     pSEP
-    string "changetype:"
+    _ <- string "changetype:"
     pFILL
-    string "delete"
+    _ <- string "delete"
     pSEP
     return $ ChangeRecord dn ChangeDelete
 
@@ -117,9 +131,9 @@ pChangeMod :: CharParser st LDIFRecord
 pChangeMod = do
     dn <- pDNSpec
     pSEP
-    string "changetype:"
+    _ <- string "changetype:"
     pFILL
-    string "modify"
+    _ <- string "modify"
     pSEP
     mods <- sepEndBy1 pModSpec (char '-' >> pSEP)
     return $ ChangeRecord dn (ChangeModify mods)
@@ -128,17 +142,17 @@ pChangeModDN :: CharParser st LDIFRecord
 pChangeModDN = do
     dn <- pDNSpec
     pSEP
-    string "changetype:"
+    _ <- string "changetype:"
     pFILL
-    string "modrdn" 
+    _ <- string "modrdn" 
     pSEP
-    string "newrdn:"
+    _ <- string "newrdn:"
     pFILL 
-    pRDN
+    _ <- pRDN
     pSEP
-    string "deleteoldrdn:"
+    _ <- string "deleteoldrdn:"
     pFILL
-    oneOf "01"
+    _ <- oneOf "01"
     pSEP
     return $ ChangeRecord dn ChangeModDN
 
@@ -147,7 +161,7 @@ pRDN = pSafeString
 
 pDNSpec :: CharParser st DN
 pDNSpec = do
-    string "dn:"
+    _ <- string "dn:"
     pDN
 
 pDN :: CharParser st DN
@@ -160,7 +174,7 @@ pAttrEqValue :: CharParser st AttrValue
 pAttrEqValue = do
    pFILL
    att <- pAttributeType
-   char '='
+   _ <- char '='
    val <- pAttrValueDN
    return (att,val)
 
@@ -168,12 +182,13 @@ pAttrValueDN :: CharParser st Value
 pAttrValueDN = do
    many (noneOf stringChars)
    where 
-     specialChars = [',','=','+','<','>','#',';','\n','\r']
+     specialChars = [',','=','+','#',';','\n','\r']
+     -- specialChars = [',','=','+','<','>','#',';','\n','\r']
      stringChars  = '\\':'"':specialChars 
 
 pVersionSpec :: CharParser st String
 pVersionSpec = do
-   string "version:"
+   _ <- string "version:"
    pFILL
    many1 digit
 
@@ -213,7 +228,7 @@ pAttrValSpec = do
 
 pValueSpec :: CharParser st Value
 pValueSpec = try (char ':' >> char ':' >> pFILL >> pBase64String)
-         <|> try (char ':' >> pFILL >> pSafeString) 
+         <|> try (char ':' >> pFILL >> pSafeString') 
          <|> (char ':' >> char '<' >> pFILL >> pURL)
 
 pURL :: CharParser st String
@@ -224,6 +239,11 @@ pSafeString = do
    c <- noneOf "\n\r :<"
    r <- many (noneOf "\n\r")
    return $ c:r
+
+pSafeString' :: CharParser st String
+pSafeString' = do
+   r <- many (noneOf "\n\r")
+   return r
  
 pBase64String :: CharParser st String
 pBase64String = pSafeString
@@ -234,11 +254,11 @@ pAttrTypeChars = many (satisfy (\x -> isAlphaNum x || x == '-'))
 pLdapOid :: CharParser st Attribute
 pLdapOid = do
    num <- many1 digit
-   rest <- many (do { string "."; n <- many1 digit; return $ '.':n})
+   rest <- many (do { _ <- string "."; n <- many1 digit; return $ '.':n})
    return (Attribute $ num ++ concat rest)
 
 pFILL :: CharParser st ()
-pFILL = spaces
+pFILL = skipMany (oneOf [' ', '\t'])
 
 pSEP :: CharParser st ()
 pSEP = try (char '\r' >> char '\n' >> return () )
