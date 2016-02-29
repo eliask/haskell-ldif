@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.12
+Version:         0.0.13
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) tools 
@@ -19,6 +19,8 @@ Description:
  - ldif2html - produces HTML/browsable LDIF file.
  .
  - ldifmodify - replays delta LDIF operations on content LDIF (similar to ldapmodify).
+ .
+ - ldifundo - produces delta LDIF which rollbacks operations in input LDIF.
  .
 Category:        Text
 Stability:       experimental
@@ -50,7 +52,7 @@ flag test
 
 flag cmd
   description: Build command line programs.
-  default:     False
+  default:     True
 
 Library
   Build-Depends:   base         < 5,
@@ -79,7 +81,12 @@ Library
         Text.LDIF.Undo
 
 Executable ldifdiff
-  Hs-Source-Dirs:  src
+  Hs-Source-Dirs:  cmd
+  Build-Depends:   base         < 5,
+                   ldif,
+                   cmdargs,
+                   filepath,
+                   bytestring
   Main-Is:         ldifdiff.hs
   if flag(cmd)
     Buildable:     True
@@ -89,7 +96,13 @@ Executable ldifdiff
     Buildable:     False
 
 Executable ldif2html
-  Hs-Source-Dirs:  src
+  Hs-Source-Dirs:  cmd
+  Build-Depends:   base         < 5,
+                   ldif,
+                   containers,
+                   cmdargs,
+                   filepath,
+                   bytestring
   Main-Is:         ldif2html.hs
   if flag(cmd)
     Buildable:     True
@@ -99,7 +112,12 @@ Executable ldif2html
     Buildable:     False
 
 Executable ldifmodify
-  Hs-Source-Dirs:  src
+  Hs-Source-Dirs:  cmd
+  Build-Depends:   base         < 5,
+                   ldif,
+                   cmdargs,
+                   filepath,
+                   bytestring
   Main-Is:         ldifmodify.hs
   if flag(cmd)
     Buildable:     True
@@ -109,7 +127,12 @@ Executable ldifmodify
     Buildable:     False
 
 Executable ldifundo
-  Hs-Source-Dirs:  src
+  Hs-Source-Dirs:  cmd
+  Build-Depends:   base         < 5,
+                   ldif,
+                   cmdargs,
+                   filepath,
+                   bytestring
   Main-Is:         ldifundo.hs
   if flag(cmd)
     Buildable:     True
@@ -119,7 +142,7 @@ Executable ldifundo
     Buildable:     False
 
 Executable ldifparse
-  Hs-Source-Dirs:  src
+  Hs-Source-Dirs:  cmd
   Main-Is:         ldifparse.hs
   if !flag(test)
     Buildable:     False
