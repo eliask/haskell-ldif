@@ -1,5 +1,5 @@
 Name:            ldif
-Version:         0.0.3
+Version:         0.0.4
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
@@ -15,7 +15,9 @@ Description:
  It includes following tool:
  .
  - diffLDIF command generates change LDIF between two 
-   content LDIF files. 
+   content LDIF files.
+ - ldif2html command generates hypertext HTML browsable
+   LDIF file. 
  .
 Category:        Text
 Stability:       experimental
@@ -39,7 +41,7 @@ Extra-Source-Files:
     
 Source-Repository head
   type:     darcs
-  location: http://rampa.sk/repo/ldif
+  location: http://patch-tag.com/r/dixiecko/ldif
 
 flag test
   description: Build test program.
@@ -50,6 +52,7 @@ Library
                    base         < 5,
                    filepath,
                    haskell98,
+                   containers,
                    parsec       >= 2.1.0,
                    Cabal        >= 1.5 && < 1.9
   Hs-Source-Dirs:  src
@@ -66,6 +69,10 @@ Library
 Executable diffLDIF
   Hs-Source-Dirs:  src
   Main-Is:         diffLDIF.hs
+
+Executable ldif2html
+  Hs-Source-Dirs:  src
+  Main-Is:         ldif2html.hs
 
 Executable test
   Hs-Source-Dirs:  src, tests

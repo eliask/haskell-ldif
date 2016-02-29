@@ -1,5 +1,6 @@
 module Text.LDIF.Parser (
 	parseLDIFStr,
+        parseLDIFStrAs,
 	parseLDIFFile,
         parseDNStr
 )
@@ -8,17 +9,28 @@ import Text.LDIF.Types
 import Text.ParserCombinators.Parsec
 import Data.Either
 import Data.Char
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, foldl')
 
 -- | Parse string as LDIF content and return LDIF or ParseError
 parseLDIFStr :: String -> Either ParseError LDIF
-parseLDIFStr = parse pLdif "(param)" . preproc 
+parseLDIFStr = parseLDIFStrAs Nothing 
 
 -- | Read and parse provided file and return LDIF or ParseError
 parseLDIFFile :: String -> IO (Either ParseError LDIF)
 parseLDIFFile name = do
 	input <- readFile name
-	return $ parse pLdif name (preproc input)
+        return $ parseLDIFStrAs' name Nothing input
+
+-- | Read and parse provided string and return LDIF or ParserError
+-- | If LDIF type is specified than given type is expected for parsing 
+-- | and mismatch generates ParseError
+parseLDIFStrAs' :: String -> Maybe LDIFType -> String -> Either ParseError LDIF
+parseLDIFStrAs' nm Nothing                = parse pLdif        nm . preproc
+parseLDIFStrAs' nm (Just LDIFContentType) = parse pLdifContent nm . preproc
+parseLDIFStrAs' nm (Just LDIFChangesType) = parse pLdifChanges nm . preproc
+
+parseLDIFStrAs :: Maybe LDIFType -> String -> Either ParseError LDIF
+parseLDIFStrAs = parseLDIFStrAs' "(param)"
 
 -- | Parse string as DN and return DN type or ParseError
 parseDNStr :: String -> Either ParseError DN
@@ -26,7 +38,7 @@ parseDNStr = parse pDN "(param)"
 
 -- | Preprocessing for concat wrapped lines and remove comment lines
 preproc :: String -> String
-preproc = unwrap . stripComments
+preproc = stripComments . unwrap
 
 -- | Remove Comment Lines
 stripComments :: String -> String
@@ -34,18 +46,18 @@ stripComments input = unlines $ filter (not . isPrefixOf "#") $ lines input
 
 -- | Unwrap lines, lines with space at begin is continue of previous line 
 unwrap :: String -> String
-unwrap input = unlines $ preprocLines $ lines input
-   where 
-    preprocLines xs = unbox $ foldl (preprocLine) ([],Nothing) xs
-    preprocLine (ys,r) []                 = (addLineMaybe ys r,Just []) 
-    preprocLine (ys,r) (l:lx) | l == ' '  = (ys,concatLineMaybe r lx)
-                              | otherwise = (addLineMaybe ys r, Just $ l:lx)
-    concatLineMaybe Nothing  x = Just x
-    concatLineMaybe (Just y) x = Just (y++x)
-    addLineMaybe xs Nothing  = xs
-    addLineMaybe xs (Just x) = xs++[x]
-    unbox (ys,Nothing) = ys
-    unbox (ys,Just x)  = ys++[x]
+unwrap xs = unlines $ takeLines $ lines xs
+
+takeLines :: [String] -> [String]
+takeLines [] = []
+takeLines xs = let (ln,ys) = takeLine xs
+               in ln:takeLines ys
+
+takeLine :: [String] -> (String, [String])
+takeLine []     = ([],[])
+takeLine (x:[]) = (x,[])
+takeLine (x:xs) = let isCont x = " " `isPrefixOf` x  
+                  in (x ++ (concat $ map (tail) $ takeWhile (isCont) xs), dropWhile (isCont) xs) 
 
 -- | Parsec ldif parser
 pLdif :: CharParser st LDIF
@@ -53,13 +65,17 @@ pLdif = try pLdifChanges <|> pLdifContent
 
 pLdifChanges :: CharParser st LDIF
 pLdifChanges = do
+    pSEPs
     ver <- optionMaybe pVersionSpec
+    pSEPs
     recs <- sepEndBy1 pChangeRec pSEPs
     return $ LDIFChanges ver recs
 
 pLdifContent :: CharParser st LDIF
 pLdifContent = do
+    pSEPs
     ver <- optionMaybe pVersionSpec
+    pSEPs
     recs <- sepEndBy1 pAttrValRec pSEPs
     return $ LDIFContent ver recs
 

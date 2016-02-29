@@ -11,3 +11,12 @@
 * TODO add module tests for versioned LDIFs
 * TODO add module tests for base64 parsing
 * TODO Implement Attribute Name case-insensitive matching at DN
+* TODO Use getopt for input parameters on diffLDIF cmd
+* TODO Implement ldifmodify (like ldapmodify)
+   offline applying of Change LDIF on Content LDIF
+   ldifmodify -h <contentLDIF> -f <changeLDIF> [-o <contentLDIFAfter>] 
+* DONE Change interface for providing parser method with expected type of LDIF
+it allows parse changeldif as contentldif regardless the content.
+
+* DONE Add ldif2html which generate hypertext LDIF representation
+* DONE Update unwrap method in preprocessor for feasible resource consuption

@@ -6,14 +6,17 @@ module Text.LDIF.Types (
         Change(..),
         Modify(..), 
         DN(..), 
+        LDIFType(..),
         Attribute, Value, AttrValue
 )
 where
-import Data.Char
 
 type Attribute = String
 type Value = String
 type AttrValue = (Attribute, Value)
+
+-- | Type of LDIF Files (Content, Changes)
+data LDIFType = LDIFContentType | LDIFChangesType deriving (Show, Eq) -- Maybe LDIFMixedType 
 
 -- | Represents LDIF structure, it can be either simply LDIF data dump or
 -- | changes LDIF with LDAP operations 
