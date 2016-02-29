@@ -1,9 +1,10 @@
 Name:            ldif
-Version:         0.0.4
+Version:         0.0.5
 License:         BSD3
 License-File:    LICENSE
 Synopsis:        The LDAP Data Interchange Format (LDIF) parser 
 Author:          Radoslav Dorcik <radoslav.dorcik@gmail.com>
+Homepage:        http://rampa.sk/static/ldif.html
 Maintainer:      radoslav.dorcik@gmail.com
 Description:     
  LDIF files parser implementation using Parsec and based

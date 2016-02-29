@@ -34,14 +34,20 @@ findContentByDN ldif dn = case findContentsByDN ldif dn of
 -- | 1. Iterate over L1 DN's and Modify / Remove Content 
 -- | 2. Iterate over L2 and Add Content not in L1
 diffLDIF :: LDIF -> LDIF -> Maybe LDIF
-diffLDIF (LDIFContent _ c1) l2@(LDIFContent v2 _) = Just (LDIFChanges v2 changes) 
+diffLDIF l1@(LDIFContent _ c1) l2@(LDIFContent v2 c2) = Just (LDIFChanges v2 (changes ++ adds))
    where 
+      adds = map (content2add) $ filter (not . isEntryIn l1) c2
       changes = filter (not . isDummyChangeRecord) $ foldl (processEntry) [] c1
       processEntry xs e1 = let me2 = findContentByDN l2 (coDN e1) 
                                change = case me2 of
 					   Nothing -> ChangeRecord (coDN e1) ChangeDelete
                                            Just e2 -> fromJust $ diffRecord e1 e2
                            in xs ++ [change]
+      isEntryIn ll ex = let mex = findContentByDN ll (coDN ex)
+                        in case mex of
+                          Nothing -> False
+                          Just _  -> True
+      content2add (ContentRecord dn vals) = ChangeRecord dn (ChangeAdd vals)
 diffLDIF _ _ = Nothing
 
 -- | Diff two AttrVal Records if any of provided. 
